@@ -1,2 +1,1 @@
-# az-infra
-IaaS - Infra as a Service in Microsoft Azure
+# IaaS - Infra as a Service in Microsoft Azure
