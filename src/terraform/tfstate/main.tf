@@ -21,6 +21,9 @@ resource "random_string" "resource_code" {
 resource "azurerm_resource_group" "tfstate" {
   name     = var.rg_name
   location = var.location
+  tags = {
+    environment = "terraform"
+  }
 }
 
 resource "azurerm_storage_account" "tfstate" {
@@ -29,8 +32,7 @@ resource "azurerm_storage_account" "tfstate" {
   location                 = azurerm_resource_group.tfstate.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  allow_blob_public_access = true
-
+  allow_blob_public_access = false
   tags = {
     environment = "terraform"
   }
