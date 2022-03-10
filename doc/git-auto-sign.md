@@ -27,3 +27,6 @@ To sign a single commit:
 Auto-sign all commits globaly:
 
 `git config --global commit.gpgsign true`
+
+On MacOS you need to include in your environment variables:
+`export GPG_TTY=$(tty)`
