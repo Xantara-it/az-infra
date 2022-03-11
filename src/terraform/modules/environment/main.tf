@@ -19,10 +19,10 @@ resource "azurerm_network_security_group" "env" {
 }
 
 resource "azurerm_subnet" "env" {
-  name                = "sn-${var.environment}"
-  resource_group_name = "rg-infra"
+  name                 = "sn-${var.environment}"
+  resource_group_name  = "rg-infra"
   virtual_network_name = "vn-infra"
-  address_prefixes = [var.cidr_blocks_snet]
+  address_prefixes     = [var.cidr_blocks_snet]
 }
 
 resource "azurerm_subnet_network_security_group_association" "env" {

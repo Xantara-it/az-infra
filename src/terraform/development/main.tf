@@ -20,9 +20,10 @@ provider "azurerm" {
   environment = "public"
 }
 
-module "development" {
+module "environment" {
   source = "../modules/environment"
 
   environment      = "development"
   cidr_blocks_snet = "10.0.241.0/24"
+  linux_vm_name    = "vm01d"
 }
