@@ -1,5 +1,6 @@
 # See: https://gmusumeci.medium.com/how-to-deploy-a-red-hat-enterprise-linux-rhel-vm-in-azure-using-terraform-90f3d413c783
 
+
 # Create a random password
 resource "random_password" "vm" {
   length           = 16
@@ -11,16 +12,29 @@ resource "random_password" "vm" {
   override_special = "!@#$%&"
 }
 
+resource "azurerm_public_ip" "vm" {
+  name                = "ip-public-vm01d"
+  resource_group_name = azurerm_resource_group.env.name
+  location            = azurerm_resource_group.env.location
+  allocation_method   = "Dynamic"
+
+  tags = {
+    environment = var.environment
+  }
+}
+
 resource "azurerm_network_interface" "vm" {
   name                = "nic-${var.linux_vm_name}"
   location            = azurerm_resource_group.env.location
   resource_group_name = azurerm_resource_group.env.name
 
   ip_configuration {
-    name                          = "internal"
+    name                          = "public"
+    public_ip_address_id          = azurerm_public_ip.vm.id
     subnet_id                     = azurerm_subnet.env.id
     private_ip_address_allocation = "Dynamic"
   }
+
   tags = {
     environment = var.environment
   }

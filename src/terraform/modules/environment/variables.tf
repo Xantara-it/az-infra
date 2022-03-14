@@ -54,7 +54,6 @@ variable "linux_vm_name" {
   description = "Name of the Linux VM"
 }
 
-
 variable "linux_admin_username" {
   type        = string
   description = "Username of the admin"

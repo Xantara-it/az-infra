@@ -25,4 +25,5 @@ module "development" {
 
   environment      = "staging"
   cidr_blocks_snet = "10.0.243.0/24"
+  linux_vm_name    = "vm01s"
 }

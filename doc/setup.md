@@ -5,7 +5,7 @@
 1. Create a remote storage for the terraform state.
    This is done once. The generated values (_storage account name_ and _storage container name_) are used in the following
    terraform code.
-   
+
    See also [README](../src/terraform/tfstate/README.md).
 
 ## Environments

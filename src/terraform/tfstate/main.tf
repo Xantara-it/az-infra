@@ -19,27 +19,23 @@ resource "random_string" "resource_code" {
 }
 
 resource "azurerm_resource_group" "tfstate" {
-  name     = var.rg_name
   location = var.location
-  tags = {
-    environment = "terraform"
-  }
+  name     = var.rg_name
+  tags     = var.tags
 }
 
 resource "azurerm_storage_account" "tfstate" {
+  location                 = var.location
+  resource_group_name      = var.rg_name
   name                     = "${var.name_prefix}${random_string.resource_code.result}"
-  resource_group_name      = azurerm_resource_group.tfstate.name
-  location                 = azurerm_resource_group.tfstate.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  allow_blob_public_access = false
-  tags = {
-    environment = "terraform"
-  }
+  allow_blob_public_access = true
+  tags                     = var.tags
 }
 
 resource "azurerm_storage_container" "tfstate" {
   name                  = var.name_container
   storage_account_name  = azurerm_storage_account.tfstate.name
-  container_access_type = "blob"
+  container_access_type = "private"
 }

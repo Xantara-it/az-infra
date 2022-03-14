@@ -25,4 +25,5 @@ module "development" {
 
   environment      = "testing"
   cidr_blocks_snet = "10.0.242.0/24"
+  linux_vm_name    = "vm01t"
 }

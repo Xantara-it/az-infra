@@ -25,4 +25,5 @@ module "development" {
 
   environment      = "production"
   cidr_blocks_snet = "10.0.244.0/24"
+  linux_vm_name    = "vm01p"
 }

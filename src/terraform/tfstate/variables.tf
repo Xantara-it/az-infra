@@ -5,7 +5,7 @@ variable "location" {
 
 variable "rg_name" {
   description = "Name of the resource group"
-  default     = "rg-terraform"
+  default     = "rg-infra"
 }
 
 variable "name_prefix" {
@@ -16,4 +16,12 @@ variable "name_prefix" {
 variable "name_container" {
   description = "Name of the storage container"
   default     = "tfstate"
+}
+
+variable "tags" {
+  type = map(any)
+  default = {
+    "environment" = "infra",
+    "createdby"   = "terraform"
+  }
 }
