@@ -18,16 +18,29 @@ variable "vn_address_space" {
   default     = "10.0.240.0/20"
 }
 
-variable "subnets" {
-  type = map(string)
-  default = {
-    # "AzureBastionSubnet" = "10.0.240.0/24",
-    "infra"       = "10.0.241.0/24",
-    "development" = "10.0.242.0/24",
-    "test"        = "10.0.243.0/24",
-    "staging"     = "10.0.244.0/24",
-    "production"  = "10.0.245.0/24"
-  }
+variable "sn_infra_address_space" {
+  description = "IP Range of the Infra subnet"
+  default     = "10.0.241.0/24"
+}
+
+variable "sn_development_address_space" {
+  description = "IP Range of the Development subnet"
+  default     = "10.0.242.0/24"
+}
+
+variable "sn_test_address_space" {
+  description = "IP Range of the Test subnet"
+  default     = "10.0.243.0/24"
+}
+
+variable "sn_staging_address_space" {
+  description = "IP Range of the Staging subnet"
+  default     = "10.0.244.0/24"
+}
+
+variable "sn_production_address_space" {
+  description = "IP Range of the Production subnet"
+  default     = "10.0.245.0/24"
 }
 
 variable "tags" {

@@ -32,11 +32,36 @@ resource "azurerm_virtual_network" "infra" {
 }
 
 resource "azurerm_subnet" "infra" {
-  for_each = var.subnets
-
   resource_group_name  = var.rg_name
-  virtual_network_name = var.vn_name
-  name                 = "sn-${each.key}"
-  address_prefixes     = [each.value]
+  virtual_network_name = azurerm_virtual_network.infra.name
+  name                 = "sn-infra"
+  address_prefixes     = [var.sn_infra_address_space]
 }
 
+resource "azurerm_subnet" "development" {
+  resource_group_name  = var.rg_name
+  virtual_network_name = azurerm_virtual_network.infra.name
+  name                 = "sn-development"
+  address_prefixes     = [var.sn_development_address_space]
+}
+
+resource "azurerm_subnet" "test" {
+  resource_group_name  = var.rg_name
+  virtual_network_name = azurerm_virtual_network.infra.name
+  name                 = "sn-test"
+  address_prefixes     = [var.sn_test_address_space]
+}
+
+resource "azurerm_subnet" "staging" {
+  resource_group_name  = var.rg_name
+  virtual_network_name = azurerm_virtual_network.infra.name
+  name                 = "sn-staging"
+  address_prefixes     = [var.sn_staging_address_space]
+}
+
+resource "azurerm_subnet" "production" {
+  resource_group_name  = var.rg_name
+  virtual_network_name = azurerm_virtual_network.infra.name
+  name                 = "sn-production"
+  address_prefixes     = [var.sn_production_address_space]
+}
