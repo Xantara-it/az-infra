@@ -43,6 +43,11 @@ variable "sn_production_address_space" {
   default     = "10.0.245.0/24"
 }
 
+variable "sn_vpnclient_address_space" {
+  description = "IP Range of the Production subnet"
+  default     = "10.0.239.0/24"
+}
+
 variable "tags" {
   type = map(any)
   default = {
