@@ -8,22 +8,22 @@ resource "azurerm_resource_group" "rg" {
 }
 
 #
-# Create a virtual network
-#
-resource "azurerm_virtual_network" "vn" {
-  name                = "${var.name_prefix}-vn"
+# Create a virtual network: 10.128.0.1 .. 10.128.15.254
+# 
+resource "azurerm_virtual_network" "server-vn" {
+  name                = "${var.name_prefix}-server-vn"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   address_space       = ["${var.address_space_prefix}.0.0/20"]
 
-  #   ddos_protection_plan {
-  #     id     = azurerm_network_ddos_protection_plan.ddos_protection.id
-  #     enable = true
-  #   }
+  tags = var.tags
+}
 
-  #   depends_on = [
-  #     azurerm_network_ddos_protection_plan.ddos_protection
-  #   ]
+resource "azurerm_virtual_network" "client-vn" {
+  name                = "${var.name_prefix}-client-vn"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  address_space       = ["${var.address_space_prefix}.16.0/24"]
 
   tags = var.tags
 }
@@ -31,10 +31,10 @@ resource "azurerm_virtual_network" "vn" {
 #
 # Create subnet for VirtualMachines
 #
-resource "azurerm_subnet" "sn" {
-  name                 = "${var.name_prefix}-vn"
+resource "azurerm_subnet" "server-sn" {
+  name                 = "${var.name_prefix}-server-sn"
   resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vn.name
+  virtual_network_name = azurerm_virtual_network.server-vn.name
   address_prefixes     = ["${var.address_space_prefix}.0.0/24"]
 }
 
@@ -46,8 +46,15 @@ resource "azurerm_subnet" "sn" {
 resource "azurerm_subnet" "gateway" {
   name                 = "GatewaySubnet"
   resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vn.name
-  address_prefixes     = ["${var.address_space_prefix}.15.192/26"]
+  virtual_network_name = azurerm_virtual_network.server-vn.name
+  address_prefixes     = ["${var.address_space_prefix}.15.0/24"]
+}
+
+resource "azurerm_subnet" "client-sn" {
+  name                 = "${var.name_prefix}-client-sn"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.client-vn.name
+  address_prefixes     = ["${var.address_space_prefix}.16.0/24"]
 }
 
 #
@@ -65,9 +72,21 @@ resource "azurerm_network_security_group" "nsg" {
     access                     = "Allow"
     protocol                   = "*"
     source_port_range          = "*"
-    source_address_prefix      = azurerm_subnet.sn.address_prefixes[0]
+    source_address_prefix      = azurerm_subnet.server-sn.address_prefixes[0]
     destination_port_range     = "*"
-    destination_address_prefix = azurerm_subnet.sn.address_prefixes[0]
+    destination_address_prefix = azurerm_subnet.server-sn.address_prefixes[0]
+  }
+
+  security_rule {
+    name                       = "AllowSshTrafficClient"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    source_address_prefix      = azurerm_subnet.client-sn.address_prefixes[0]
+    destination_port_range     = "22"
+    destination_address_prefix = azurerm_subnet.server-sn.address_prefixes[0]
   }
 
   security_rule {
@@ -79,7 +98,7 @@ resource "azurerm_network_security_group" "nsg" {
     source_port_range          = "*"
     source_address_prefix      = "*"
     destination_port_range     = "*"
-    destination_address_prefix = azurerm_subnet.sn.address_prefixes[0]
+    destination_address_prefix = azurerm_subnet.server-sn.address_prefixes[0]
   }
 
   tags = var.tags
@@ -89,7 +108,7 @@ resource "azurerm_network_security_group" "nsg" {
 # Link subnet to nsg
 #
 resource "azurerm_subnet_network_security_group_association" "sn-nsg" {
-  subnet_id                 = azurerm_subnet.sn.id
+  subnet_id                 = azurerm_subnet.server-sn.id
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
@@ -108,7 +127,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dns" {
   name                  = "${var.name_prefix}-dns"
   resource_group_name   = azurerm_resource_group.rg.name
   private_dns_zone_name = azurerm_private_dns_zone.dns_zone.name
-  virtual_network_id    = azurerm_virtual_network.vn.id
+  virtual_network_id    = azurerm_virtual_network.server-vn.id
   registration_enabled  = true
 }
 
@@ -148,7 +167,29 @@ resource "azurerm_virtual_network_gateway" "gw" {
   }
 
   vpn_client_configuration {
-    address_space = ["172.22.200.0/23"]
+    address_space = azurerm_subnet.client-sn.address_prefixes
+
+    root_certificate {
+      name             = "Xantara-it-VPN-CA"
+      public_cert_data = <<EOF
+MIIC/DCCAeSgAwIBAgIIM4kg3ihgiCAwDQYJKoZIhvcNAQELBQAwHDEaMBgGA1UE
+AxMRWGFudGFyYSBJVCBWUE4gQ0EwHhcNMjIwODExMDgzMjAzWhcNMjUwODEwMDgz
+MjAzWjAcMRowGAYDVQQDExFYYW50YXJhIElUIFZQTiBDQTCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAM6/WHcPW6H8dA6x3sxTW5lfq3PqqfFaVBoDG73A
+Z2H5RghYqdmjXfrVee1Rm7L5JcwIULB1u496khHSg0hxdnYJgwI4VP+1EZefcvsy
+rbeDwYF+qMjSKMD0PsT4bLFBMB+37/0nDZAUUDHAQR9pb1uTdft/QWefBb5KNHDQ
+YtAx/KKboyRUOWAXSXr1zEV/ou+mDUTxIFXk7JGTPd2vQ9QqC9jForsXBBp1U0iW
+gYRnuXJzdGeSekgheBLT/Wwz2l5ToRcNOn1vnhFJVH0ArqrkR2Bb5QzEc4omCf5n
+Oe340cLuUbHkr4o9NWpXUIsMvrQ4cpVfITfD0R7thgRwQikCAwEAAaNCMEAwDwYD
+VR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYEFLrzP6NGMYb7
+3RVCYruJJ7FKJJswMA0GCSqGSIb3DQEBCwUAA4IBAQDA4QFrHH4it+U6+DwbIgTH
+BM83q0QbA0o5LVboOeTU2xrlS7kf8BfqZOdC7klKNrl61nq7eQ790gzDGY3Vk0PG
+auBn5NozXNAhxlH5KN3lDljtcon45EksLHkYvyJnVeE0ZMC+iq9SYiA6lUMcbxbo
+IhrOO9IjdGst1RJGMwZzc9Gc/XfSr4BkryrJshrP9FMu6vSOjKY5UpSaP7FkIbyz
+iumgIDX2LnMcGTocSABau5UuWZ9PSJUqv58vDB15ZLUfhC+7duVcsUzcxOKKbadl
+QmwimZMB9CP4IzCie3ycHEYKEdhFS3IzXD4YkLNorhB1hCP+HmnbdKjFhKjW5MB6
+EOF
+    }
   }
 
   tags = var.tags

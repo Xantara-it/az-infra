@@ -14,7 +14,11 @@ terraform {
   }
 }
 
+#
+# ToDo: Ids are from my private Azure account
+#
 provider "azurerm" {
-  features {
-  }
+  features {}
+  subscription_id = "23c28aac-2178-4d00-880c-94bd7e8944c3"
+  tenant_id       = "1dac3ff2-bab9-401d-8ac3-6fa4eefa0422"
 }
