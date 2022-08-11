@@ -3,11 +3,6 @@ variable "location" {
   default     = "westeurope"
 }
 
-variable "rg_name" {
-  description = "Name of the resource group"
-  default     = "az-infra-rg"
-}
-
 variable "name_prefix" {
   description = "Name prefix"
   default     = "az-infra"
