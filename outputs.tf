@@ -9,3 +9,7 @@ output "subnet_gateway_prefix" {
 output "vpn_public_ip" {
   value = azurerm_public_ip.ip.ip_address
 }
+
+output "vms" {
+  value = module.vm
+}
