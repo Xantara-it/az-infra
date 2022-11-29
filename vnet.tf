@@ -5,16 +5,7 @@ resource "azurerm_virtual_network" "server-vn" {
   name                = "${var.name_prefix}-server-vn"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  address_space       = ["${var.address_space_prefix}.0.0/20"]
-
-  tags = var.tags
-}
-
-resource "azurerm_virtual_network" "client-vn" {
-  name                = "${var.name_prefix}-client-vn"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  address_space       = ["${var.address_space_prefix}.16.0/24"]
+  address_space       = [local.address_space_vnet]
 
   tags = var.tags
 }
@@ -26,7 +17,7 @@ resource "azurerm_subnet" "server-sn" {
   name                 = "${var.name_prefix}-server-sn"
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.server-vn.name
-  address_prefixes     = ["${var.address_space_prefix}.0.0/24"]
+  address_prefixes     = [local.address_space_server]
 }
 
 #
@@ -38,14 +29,7 @@ resource "azurerm_subnet" "gateway" {
   name                 = "GatewaySubnet"
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.server-vn.name
-  address_prefixes     = ["${var.address_space_prefix}.15.0/24"]
-}
-
-resource "azurerm_subnet" "client-sn" {
-  name                 = "${var.name_prefix}-client-sn"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.client-vn.name
-  address_prefixes     = ["${var.address_space_prefix}.16.0/24"]
+  address_prefixes     = [local.address_space_gateway]
 }
 
 #
@@ -63,9 +47,9 @@ resource "azurerm_network_security_group" "nsg" {
     access                     = "Allow"
     protocol                   = "*"
     source_port_range          = "*"
-    source_address_prefix      = azurerm_subnet.server-sn.address_prefixes[0]
+    source_address_prefix      = local.address_space_server
     destination_port_range     = "*"
-    destination_address_prefix = azurerm_subnet.server-sn.address_prefixes[0]
+    destination_address_prefix = local.address_space_server
   }
 
   security_rule {
@@ -75,9 +59,9 @@ resource "azurerm_network_security_group" "nsg" {
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    source_address_prefix      = azurerm_subnet.client-sn.address_prefixes[0]
+    source_address_prefix      = local.address_space_client
     destination_port_range     = "22"
-    destination_address_prefix = azurerm_subnet.server-sn.address_prefixes[0]
+    destination_address_prefix = local.address_space_server
   }
 
   security_rule {
@@ -89,7 +73,7 @@ resource "azurerm_network_security_group" "nsg" {
     source_port_range          = "*"
     source_address_prefix      = "*"
     destination_port_range     = "*"
-    destination_address_prefix = azurerm_subnet.server-sn.address_prefixes[0]
+    destination_address_prefix = local.address_space_server
   }
 
   tags = var.tags
@@ -120,4 +104,11 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dns" {
   private_dns_zone_name = azurerm_private_dns_zone.dns_zone.name
   virtual_network_id    = azurerm_virtual_network.server-vn.id
   registration_enabled  = true
+}
+
+locals {
+  address_space_vnet    = cidrsubnet(var.address_space, 4, 0)         # /20
+  address_space_server  = cidrsubnet(local.address_space_vnet, 4, 0)  # /24
+  address_space_gateway = cidrsubnet(local.address_space_vnet, 4, 15) # /24
+  address_space_client  = cidrsubnet(var.address_space, 8, 16)        # /24
 }

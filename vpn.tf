@@ -34,7 +34,7 @@ resource "azurerm_virtual_network_gateway" "gw" {
   }
 
   vpn_client_configuration {
-    address_space = azurerm_subnet.client-sn.address_prefixes
+    address_space = [local.address_space_client]
 
     root_certificate {
       name             = "Xantara-it-VPN-CA"

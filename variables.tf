@@ -8,9 +8,9 @@ variable "name_prefix" {
   default     = "az-infra"
 }
 
-variable "address_space_prefix" {
+variable "address_space" {
   description = "VNET address prefix"
-  default     = "10.128"
+  default     = "10.128.0.0/16"
 }
 
 variable "tags" {
